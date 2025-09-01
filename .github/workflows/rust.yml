@@ -1,0 +1,41 @@
+name: "Build and Run Tests"
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: "Build and Run Tests"
+
+    strategy:
+      matrix:
+        pg_version: ["12", "13", "14", "15", "16", "17"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo
+            ~/.pgrx
+            target/
+          key: ${{ runner.os }}-${{ steps.rust-install.outputs.cachekey }}-pg${{ matrix.pg_version }}
+
+      - name: Install libreadline-dev
+        run: sudo apt-get update && sudo apt-get install -y libreadline-dev
+
+      - name: Init pgrx
+        run: |
+          cargo install cargo-pgrx
+          cargo pgrx init --pg${{ matrix.pg_version }}=download
+
+      - name: Run testsuite
+        run: |
+          cargo pgrx test --features pg${{ matrix.pg_version }} pg${{ matrix.pg_version }}
