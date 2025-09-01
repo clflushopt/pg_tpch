@@ -220,8 +220,11 @@ fn tpch_queries() -> Vec<String> {
 
 #[pg_extern]
 fn tpch_query(query_nr: i32) -> spi::Result<String> {
-    let query = tpchgen::q_and_a::queries::query(query_nr).expect("Invalid query number");
-    Ok(query.to_string())
+    let query = queries::QUERIES
+        .iter()
+        .find(|query| query.0 == query_nr)
+        .expect("Invalid query number must be between 1 and 22 (inclusive)");
+    Ok(query.1.to_string())
 }
 
 #[cfg(any(test, feature = "pg_test"))]
